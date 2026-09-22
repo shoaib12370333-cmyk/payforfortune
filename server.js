@@ -47,8 +47,6 @@ app.post(
         amount: session.amount,
         amountReceived: session.amount_received,
         email: session.customer_email,
-        playerId: existing ? existing.playerId : (session.metadata && session.metadata.playerId) || "",
-        productName: existing ? existing.productName : (session.metadata && session.metadata.productName) || "",
         fulfilled: existing ? existing.fulfilled : false,
         updatedAt: new Date().toISOString(),
       });
@@ -68,11 +66,11 @@ app.get("/", (req, res) => {
 
 app.post("/checkout", async (req, res) => {
   const config = store.getConfig();
-  const { playerId, email, productId } = req.body;
-  const product = config.products.find((p) => p.id === productId);
+  const { email, amount } = req.body;
+  const parsedAmount = parseFloat(amount);
 
-  if (!playerId || !email || !product) {
-    return res.status(400).render("index", { config, error: "Please fill in all fields and pick a package." });
+  if (!email || !amount || Number.isNaN(parsedAmount) || parsedAmount < 0.5 || parsedAmount > 100000) {
+    return res.status(400).render("index", { config, error: "Please enter a valid email and an amount between $0.50 and $100,000." });
   }
 
   // Generated up front: CashTap doesn't hand back a session id until
@@ -82,25 +80,20 @@ app.post("/checkout", async (req, res) => {
   store.upsertOrder({
     orderId,
     status: "pending",
-    amount: product.amount,
+    amount: parsedAmount,
     email,
-    playerId,
-    productName: product.name,
     fulfilled: false,
     createdAt: new Date().toISOString(),
   });
 
   try {
     const session = await cashtap.createCheckoutSession({
-      amount: product.amount,
-      lineItems: [
-        { name: `${config.gameName} — ${product.name}`, quantity: 1, unit_amount: product.amount },
-      ],
+      amount: parsedAmount,
       customerEmail: email,
       paymentMethods: config.payment_methods,
       successUrl: `${BASE_URL}/success?order=${orderId}`,
       cancelUrl: `${BASE_URL}/cancel`,
-      metadata: { orderId, playerId, productId: product.id, productName: product.name },
+      metadata: { orderId },
     });
 
     store.upsertOrder({
@@ -183,30 +176,7 @@ app.get("/admin", adminAuth, (req, res) => {
 
 app.post("/admin/config", adminAuth, (req, res) => {
   const config = store.getConfig();
-  const body = req.body;
-
-  config.brandName = body.brandName;
-  config.gameName = body.gameName;
-
-  const updatedProducts = [];
-  config.products.forEach((p, i) => {
-    if (body[`remove_${i}`]) return;
-    updatedProducts.push({
-      id: body[`productId_${i}`],
-      name: body[`productName_${i}`],
-      amount: parseFloat(body[`productAmount_${i}`]),
-    });
-  });
-
-  if (body.newProductId && body.newProductName && body.newProductAmount) {
-    updatedProducts.push({
-      id: body.newProductId,
-      name: body.newProductName,
-      amount: parseFloat(body.newProductAmount),
-    });
-  }
-
-  config.products = updatedProducts;
+  config.brandName = req.body.brandName;
   store.saveConfig(config);
 
   const orders = store.getOrders();

@@ -14,7 +14,7 @@
     <div class="status-card status-<%= status %>">
       <% if (status === "completed") { %>
         <h2>Payment received ✅</h2>
-        <p>Your <%= order ? order.productName : "" %> top-up for Player ID <strong><%= order ? order.playerId : "" %></strong> is being processed and will be delivered shortly.</p>
+        <p>Your payment of $<%= order ? order.amount.toFixed(2) : "" %> has been received. We'll be in touch at <strong><%= order ? order.email : "" %></strong> shortly.</p>
       <% } else if (status === "processing") { %>
         <h2>Payment confirmed, settling…</h2>
         <p>Your payment is on-chain and settling. This page will update automatically — feel free to refresh.</p>

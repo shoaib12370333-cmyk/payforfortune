@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= config.brandName %> — <%= config.gameName %> Top-up</title>
+  <title><%= config.brandName %></title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="hero">
     <h1><%= config.brandName %></h1>
-    <p><%= config.gameName %> Diamond Top-up — instant, secure checkout</p>
+    <p>Instant, secure checkout</p>
   </header>
 
   <main class="container">
@@ -19,30 +19,19 @@
 
     <form action="/checkout" method="POST" class="order-form">
       <label>
-        Player ID (In-game UID)
-        <input type="text" name="playerId" required placeholder="e.g. 123456789" />
-      </label>
-
-      <label>
-        Email (for order updates)
+        Email
         <input type="email" name="email" required placeholder="you@example.com" />
       </label>
 
-      <fieldset class="products">
-        <legend>Select a package</legend>
-        <% config.products.forEach(function(p, i) { %>
-          <label class="product-card">
-            <input type="radio" name="productId" value="<%= p.id %>" <%= i === 0 ? "checked" : "" %> required />
-            <span class="product-name"><%= p.name %></span>
-            <span class="product-price">$<%= p.amount.toFixed(2) %></span>
-          </label>
-        <% }); %>
-      </fieldset>
+      <label>
+        Amount (USD)
+        <input type="number" name="amount" step="0.01" min="0.50" max="100000" required placeholder="e.g. 10.00" />
+      </label>
 
       <button type="submit">Pay with CashTap</button>
     </form>
 
-    <p class="fineprint">Top-up is delivered to your Player ID after payment is confirmed. Keep this window open until you're redirected back.</p>
+    <p class="fineprint">Minimum $0.50. You'll be redirected to CashTap's secure checkout to complete payment.</p>
   </main>
 </body>
 </html>
