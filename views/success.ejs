@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order status — <%= config.brandName %></title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <h1><%= config.brandName %></h1>
+  </header>
+  <main class="container">
+    <div class="status-card status-<%= status %>">
+      <% if (status === "completed") { %>
+        <h2>Payment received ✅</h2>
+        <p>Your <%= order ? order.productName : "" %> top-up for Player ID <strong><%= order ? order.playerId : "" %></strong> is being processed and will be delivered shortly.</p>
+      <% } else if (status === "processing") { %>
+        <h2>Payment confirmed, settling…</h2>
+        <p>Your payment is on-chain and settling. This page will update automatically — feel free to refresh.</p>
+      <% } else if (status === "pending") { %>
+        <h2>Waiting for payment…</h2>
+        <p>If you already paid, please wait a few seconds and refresh this page.</p>
+      <% } else { %>
+        <h2>Order not completed</h2>
+        <p>Status: <%= status %>. If you believe this is a mistake, contact support with order id <code><%= sessionId %></code>.</p>
+      <% } %>
+    </div>
+    <a class="back-link" href="/">&larr; Back to store</a>
+  </main>
+</body>
+</html>

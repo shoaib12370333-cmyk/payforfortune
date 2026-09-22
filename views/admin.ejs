@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — <%= config.brandName %></title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="hero"><h1>Admin panel</h1></header>
+  <main class="container">
+    <% if (saved) { %><div class="alert success">Saved.</div><% } %>
+
+    <nav class="tabs">
+      <a href="#settings" class="tab-link">Store settings</a>
+      <a href="#orders" class="tab-link">Orders</a>
+      <a href="#customers" class="tab-link">Customers</a>
+    </nav>
+
+    <section class="admin-section" id="settings">
+      <h2>Store settings</h2>
+      <form action="/admin/config" method="POST" class="admin-form">
+        <label>Brand name <input type="text" name="brandName" value="<%= config.brandName %>" required /></label>
+        <label>Game name <input type="text" name="gameName" value="<%= config.gameName %>" required /></label>
+
+        <h3>Packages</h3>
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Price (USD)</th><th></th></tr></thead>
+          <tbody>
+            <% config.products.forEach(function(p, i) { %>
+              <tr>
+                <td><input type="text" name="productId_<%= i %>" value="<%= p.id %>" required /></td>
+                <td><input type="text" name="productName_<%= i %>" value="<%= p.name %>" required /></td>
+                <td><input type="number" step="0.01" min="0.5" name="productAmount_<%= i %>" value="<%= p.amount %>" required /></td>
+                <td><label><input type="checkbox" name="remove_<%= i %>" value="1" /> remove</label></td>
+              </tr>
+            <% }); %>
+            <tr>
+              <td><input type="text" name="newProductId" placeholder="e.g. ff-2200" /></td>
+              <td><input type="text" name="newProductName" placeholder="e.g. 2200 Diamonds" /></td>
+              <td><input type="number" step="0.01" min="0.5" name="newProductAmount" placeholder="30.00" /></td>
+              <td>add new</td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="submit">Save settings</button>
+      </form>
+    </section>
+
+    <section class="admin-section" id="orders">
+      <h2>Orders</h2>
+      <table class="admin-table">
+        <thead><tr><th>Session</th><th>Player ID</th><th>Product</th><th>Email</th><th>Status</th><th>Fulfilled</th><th></th></tr></thead>
+        <tbody>
+          <% orders.slice().reverse().forEach(function(o) { %>
+            <tr>
+              <td><code><%= o.sessionId %></code></td>
+              <td><%= o.playerId %></td>
+              <td><%= o.productName %></td>
+              <td><%= o.email %></td>
+              <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+              <td><%= o.fulfilled ? "yes" : "no" %></td>
+              <td>
+                <% if (o.status === "completed" && !o.fulfilled) { %>
+                  <form action="/admin/fulfill" method="POST">
+                    <input type="hidden" name="sessionId" value="<%= o.sessionId %>" />
+                    <button type="submit">Mark fulfilled</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="admin-section" id="customers">
+      <h2>Customers</h2>
+      <table class="admin-table">
+        <thead><tr><th>Email</th><th>Total orders</th><th>Pending</th><th>Completed</th><th>Failed / Expired</th><th>Last order</th></tr></thead>
+        <tbody>
+          <% customers.forEach(function(c) { %>
+            <tr>
+              <td><%= c.email %></td>
+              <td><%= c.total %></td>
+              <td><span class="badge badge-pending"><%= c.pending %></span></td>
+              <td><span class="badge badge-completed"><%= c.completed %></span></td>
+              <td><span class="badge badge-failed"><%= c.failedOrExpired %></span></td>
+              <td><%= c.lastOrderAt %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

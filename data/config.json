@@ -1,0 +1,11 @@
+{
+  "gameName": "Free Fire",
+  "brandName": "PayForFortune",
+  "payment_methods": ["wallet", "cashapp"],
+  "products": [
+    { "id": "ff-100", "name": "100 Diamonds", "amount": 1.5 },
+    { "id": "ff-310", "name": "310 Diamonds", "amount": 4.5 },
+    { "id": "ff-520", "name": "520 Diamonds", "amount": 7.5 },
+    { "id": "ff-1080", "name": "1080 Diamonds", "amount": 15.0 }
+  ]
+}
