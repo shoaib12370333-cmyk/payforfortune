@@ -61,7 +61,7 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
   const config = store.getConfig();
-  res.render("index", { config, error: null });
+  res.render("index", { config, error: null, values: {} });
 });
 
 app.post("/checkout", async (req, res) => {
@@ -70,7 +70,11 @@ app.post("/checkout", async (req, res) => {
   const parsedAmount = parseFloat(amount);
 
   if (!email || !amount || Number.isNaN(parsedAmount) || parsedAmount < 0.5 || parsedAmount > 100000) {
-    return res.status(400).render("index", { config, error: "Please enter a valid email and an amount between $0.50 and $100,000." });
+    return res.status(400).render("index", {
+      config,
+      error: "Please enter a valid email and an amount between $0.50 and $100,000.",
+      values: { email, amount },
+    });
   }
 
   // Generated up front: CashTap doesn't hand back a session id until
@@ -104,7 +108,8 @@ app.post("/checkout", async (req, res) => {
 
     res.redirect(303, session.url);
   } catch (err) {
-    res.status(502).render("index", { config, error: err.message });
+    store.upsertOrder({ orderId, status: "failed", updatedAt: new Date().toISOString() });
+    res.status(502).render("index", { config, error: err.message, values: { email, amount } });
   }
 });
 
@@ -168,19 +173,36 @@ function buildCustomerSummary(orders) {
   return Array.from(byEmail.values()).sort((a, b) => (a.lastOrderAt < b.lastOrderAt ? 1 : -1));
 }
 
+function buildStats(orders) {
+  const completed = orders.filter((o) => o.status === "completed");
+  return {
+    total: orders.length,
+    completed: completed.length,
+    pending: orders.filter((o) => o.status === "pending" || o.status === "processing").length,
+    revenue: completed.reduce((sum, o) => sum + Number(o.amount || 0), 0),
+  };
+}
+
 app.get("/admin", adminAuth, (req, res) => {
   const config = store.getConfig();
   const orders = store.getOrders();
-  res.render("admin", { config, orders, customers: buildCustomerSummary(orders), saved: false });
+  res.render("admin", {
+    config,
+    orders,
+    customers: buildCustomerSummary(orders),
+    stats: buildStats(orders),
+    saved: req.query.saved === "1",
+  });
 });
 
 app.post("/admin/config", adminAuth, (req, res) => {
   const config = store.getConfig();
-  config.brandName = req.body.brandName;
-  store.saveConfig(config);
-
-  const orders = store.getOrders();
-  res.render("admin", { config, orders, customers: buildCustomerSummary(orders), saved: true });
+  const brandName = (req.body.brandName || "").trim();
+  if (brandName) {
+    config.brandName = brandName;
+    store.saveConfig(config);
+  }
+  res.redirect(303, "/admin?saved=1#settings");
 });
 
 app.post("/admin/fulfill", adminAuth, (req, res) => {

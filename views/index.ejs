@@ -3,35 +3,153 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= config.brandName %></title>
+  <title><%= config.brandName %> — Secure Checkout</title>
+  <meta name="description" content="Make a secure payment in seconds." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232fd6a1'/%3E%3Cpath d='M9 17l4 4 10-10' fill='none' stroke='%2304140f' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header class="hero">
-    <h1><%= config.brandName %></h1>
-    <p>Instant, secure checkout</p>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"/></svg>
+        </span>
+        <%= config.brandName %>
+      </a>
+      <span class="pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Secure checkout
+      </span>
+    </div>
   </header>
 
-  <main class="container">
-    <% if (error) { %>
-      <div class="alert error"><%= error %></div>
-    <% } %>
+  <main class="container layout">
+    <section class="intro">
+      <span class="eyebrow">Fast &middot; Simple &middot; Secure</span>
+      <h1>Make your payment <span class="grad">in seconds.</span></h1>
+      <p class="lead">Enter your email and the amount you'd like to pay. You'll complete the payment on a secure hosted checkout page.</p>
 
-    <form action="/checkout" method="POST" class="order-form">
-      <label>
-        Email
-        <input type="email" name="email" required placeholder="you@example.com" />
-      </label>
+      <ul class="features">
+        <li>
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+          </span>
+          <div><strong>Instant confirmation</strong><span>Your order status updates as soon as the payment is confirmed.</span></div>
+        </li>
+        <li>
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </span>
+          <div><strong>Hosted, protected checkout</strong><span>Payment details are entered on the payment provider's page, never on ours.</span></div>
+        </li>
+        <li>
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          </span>
+          <div><strong>Flexible payment options</strong><span>Choose the payment method that works best for you at checkout.</span></div>
+        </li>
+      </ul>
+    </section>
 
-      <label>
-        Amount (USD)
-        <input type="number" name="amount" step="0.01" min="0.50" max="100000" required placeholder="e.g. 10.00" />
-      </label>
+    <section class="card" aria-labelledby="pay-title">
+      <h2 id="pay-title">Payment details</h2>
+      <p class="sub">Takes less than a minute.</p>
 
-      <button type="submit">Pay with CashTap</button>
-    </form>
+      <% if (error) { %>
+        <div class="alert error" role="alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span><%= error %></span>
+        </div>
+      <% } %>
 
-    <p class="fineprint">Minimum $0.50. You'll be redirected to CashTap's secure checkout to complete payment.</p>
+      <form action="/checkout" method="POST" id="pay-form" novalidate>
+        <label class="field">
+          <span class="label">Email address</span>
+          <input type="email" name="email" id="email" required autocomplete="email" placeholder="you@example.com" value="<%= values && values.email ? values.email : '' %>" />
+        </label>
+
+        <label class="field">
+          <span class="label">Amount</span>
+          <div class="input-wrap has-prefix">
+            <span class="prefix">$</span>
+            <input type="number" name="amount" id="amount" step="0.01" min="0.50" max="100000" required inputmode="decimal" placeholder="0.00" value="<%= values && values.amount ? values.amount : '' %>" />
+            <span class="suffix">USD</span>
+          </div>
+        </label>
+
+        <div class="chips" aria-label="Quick amounts">
+          <button type="button" class="chip" data-amount="5">$5</button>
+          <button type="button" class="chip" data-amount="10">$10</button>
+          <button type="button" class="chip" data-amount="25">$25</button>
+          <button type="button" class="chip" data-amount="50">$50</button>
+          <button type="button" class="chip" data-amount="100">$100</button>
+        </div>
+
+        <div class="summary">
+          <span>Total due</span>
+          <strong id="total">$0.00</strong>
+        </div>
+
+        <button type="submit" class="btn" id="pay-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <span id="pay-label">Pay</span>
+        </button>
+
+        <p class="secure-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Minimum $0.50. You'll be redirected to a secure hosted checkout to complete your payment.</span>
+        </p>
+      </form>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="container">&copy; <%= new Date().getFullYear() %> <%= config.brandName %>. All rights reserved.</div>
+  </footer>
+
+  <script>
+    (function () {
+      var form = document.getElementById("pay-form");
+      var amount = document.getElementById("amount");
+      var total = document.getElementById("total");
+      var btn = document.getElementById("pay-btn");
+      var label = document.getElementById("pay-label");
+
+      function fmt(v) {
+        var n = parseFloat(v);
+        return "$" + (isNaN(n) ? 0 : n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function sync() {
+        total.textContent = fmt(amount.value);
+      }
+
+      amount.addEventListener("input", sync);
+
+      document.querySelectorAll(".chip").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          amount.value = Number(chip.dataset.amount).toFixed(2);
+          sync();
+          amount.focus();
+        });
+      });
+
+      form.addEventListener("submit", function (e) {
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          form.reportValidity();
+          return;
+        }
+        btn.disabled = true;
+        label.textContent = "Redirecting…";
+      });
+
+      sync();
+    })();
+  </script>
 </body>
 </html>

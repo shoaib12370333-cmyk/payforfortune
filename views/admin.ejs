@@ -3,72 +3,147 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>Admin — <%= config.brandName %></title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232fd6a1'/%3E%3Cpath d='M9 17l4 4 10-10' fill='none' stroke='%2304140f' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header class="hero"><h1>Admin panel</h1></header>
-  <main class="container">
-    <% if (saved) { %><div class="alert success">Saved.</div><% } %>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="/admin">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"/></svg>
+        </span>
+        <%= config.brandName %>
+      </a>
+      <span class="pill">Admin dashboard</span>
+    </div>
+  </header>
 
-    <nav class="tabs">
-      <a href="#settings" class="tab-link">Store settings</a>
-      <a href="#orders" class="tab-link">Orders</a>
-      <a href="#customers" class="tab-link">Customers</a>
+  <main class="container admin-shell">
+    <% if (saved) { %>
+      <div class="alert success" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+        <span>Settings saved.</span>
+      </div>
+    <% } %>
+
+    <section class="stats">
+      <div class="stat accent"><div class="k">Revenue</div><div class="v">$<%= stats.revenue.toFixed(2) %></div></div>
+      <div class="stat"><div class="k">Total orders</div><div class="v"><%= stats.total %></div></div>
+      <div class="stat"><div class="k">Completed</div><div class="v"><%= stats.completed %></div></div>
+      <div class="stat"><div class="k">Pending</div><div class="v"><%= stats.pending %></div></div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="orders" role="tab">Orders</button>
+      <button class="tab" data-tab="customers" role="tab">Customers</button>
+      <button class="tab" data-tab="settings" role="tab">Settings</button>
     </nav>
 
-    <section class="admin-section" id="settings">
+    <section class="panel active panel-card" id="panel-orders">
+      <h2>Orders</h2>
+      <% if (orders.length === 0) { %>
+        <div class="empty">No orders yet. New payments will appear here.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Session</th><th>Email</th><th>Amount</th><th>Status</th><th>Fulfilled</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% orders.slice().reverse().forEach(function(o) { %>
+                <tr>
+                  <td><code class="ellipsis" title="<%= o.sessionId || '' %>"><%= o.sessionId || '—' %></code></td>
+                  <td><%= o.email %></td>
+                  <td class="num">$<%= Number(o.amount || 0).toFixed(2) %></td>
+                  <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+                  <td><%= o.fulfilled ? "Yes" : "No" %></td>
+                  <td>
+                    <% if (o.status === "completed" && !o.fulfilled) { %>
+                      <form action="/admin/fulfill" method="POST">
+                        <input type="hidden" name="sessionId" value="<%= o.sessionId %>" />
+                        <button type="submit" class="btn btn-sm">Mark fulfilled</button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="panel panel-card" id="panel-customers">
+      <h2>Customers</h2>
+      <% if (customers.length === 0) { %>
+        <div class="empty">No customers yet.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Email</th><th>Orders</th><th>Pending</th><th>Successful</th><th>Failed / Expired</th><th>Last activity</th></tr>
+            </thead>
+            <tbody>
+              <% customers.forEach(function(c) { %>
+                <tr>
+                  <td><%= c.email %></td>
+                  <td class="num"><%= c.total %></td>
+                  <td><span class="badge badge-pending"><%= c.pending %></span></td>
+                  <td><span class="badge badge-completed"><%= c.completed %></span></td>
+                  <td><span class="badge badge-failed"><%= c.failedOrExpired %></span></td>
+                  <td><%= c.lastOrderAt ? new Date(c.lastOrderAt).toLocaleString("en-US") : "—" %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="panel panel-card" id="panel-settings">
       <h2>Store settings</h2>
       <form action="/admin/config" method="POST" class="admin-form">
-        <label>Brand name <input type="text" name="brandName" value="<%= config.brandName %>" required /></label>
-        <button type="submit">Save settings</button>
+        <label class="field">
+          <span class="label">Brand name</span>
+          <input type="text" name="brandName" value="<%= config.brandName %>" required />
+        </label>
+        <button type="submit" class="btn btn-sm">Save settings</button>
       </form>
     </section>
-
-    <section class="admin-section" id="orders">
-      <h2>Orders</h2>
-      <table class="admin-table">
-        <thead><tr><th>Session</th><th>Email</th><th>Amount</th><th>Status</th><th>Fulfilled</th><th></th></tr></thead>
-        <tbody>
-          <% orders.slice().reverse().forEach(function(o) { %>
-            <tr>
-              <td><code><%= o.sessionId %></code></td>
-              <td><%= o.email %></td>
-              <td>$<%= (o.amount || 0).toFixed(2) %></td>
-              <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
-              <td><%= o.fulfilled ? "yes" : "no" %></td>
-              <td>
-                <% if (o.status === "completed" && !o.fulfilled) { %>
-                  <form action="/admin/fulfill" method="POST">
-                    <input type="hidden" name="sessionId" value="<%= o.sessionId %>" />
-                    <button type="submit">Mark fulfilled</button>
-                  </form>
-                <% } %>
-              </td>
-            </tr>
-          <% }); %>
-        </tbody>
-      </table>
-    </section>
-
-    <section class="admin-section" id="customers">
-      <h2>Customers</h2>
-      <table class="admin-table">
-        <thead><tr><th>Email</th><th>Total orders</th><th>Pending</th><th>Completed</th><th>Failed / Expired</th><th>Last order</th></tr></thead>
-        <tbody>
-          <% customers.forEach(function(c) { %>
-            <tr>
-              <td><%= c.email %></td>
-              <td><%= c.total %></td>
-              <td><span class="badge badge-pending"><%= c.pending %></span></td>
-              <td><span class="badge badge-completed"><%= c.completed %></span></td>
-              <td><span class="badge badge-failed"><%= c.failedOrExpired %></span></td>
-              <td><%= c.lastOrderAt %></td>
-            </tr>
-          <% }); %>
-        </tbody>
-      </table>
-    </section>
   </main>
+
+  <footer class="footer">
+    <div class="container">&copy; <%= new Date().getFullYear() %> <%= config.brandName %></div>
+  </footer>
+
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll(".tab");
+      var names = ["orders", "customers", "settings"];
+
+      function show(name) {
+        if (names.indexOf(name) === -1) name = "orders";
+        tabs.forEach(function (t) { t.classList.toggle("active", t.dataset.tab === name); });
+        names.forEach(function (n) {
+          document.getElementById("panel-" + n).classList.toggle("active", n === name);
+        });
+      }
+
+      tabs.forEach(function (t) {
+        t.addEventListener("click", function () {
+          history.replaceState(null, "", "#" + t.dataset.tab);
+          show(t.dataset.tab);
+        });
+      });
+
+      show(location.hash.replace("#", ""));
+    })();
+  </script>
 </body>
 </html>

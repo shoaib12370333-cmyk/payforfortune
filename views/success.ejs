@@ -3,30 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order status — <%= config.brandName %></title>
+  <title>Payment status — <%= config.brandName %></title>
+  <% if (status === "pending" || status === "processing") { %><meta http-equiv="refresh" content="6" /><% } %>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232fd6a1'/%3E%3Cpath d='M9 17l4 4 10-10' fill='none' stroke='%2304140f' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header class="hero">
-    <h1><%= config.brandName %></h1>
-  </header>
-  <main class="container">
-    <div class="status-card status-<%= status %>">
-      <% if (status === "completed") { %>
-        <h2>Payment received ✅</h2>
-        <p>Your payment of $<%= order ? order.amount.toFixed(2) : "" %> has been received. We'll be in touch at <strong><%= order ? order.email : "" %></strong> shortly.</p>
-      <% } else if (status === "processing") { %>
-        <h2>Payment confirmed, settling…</h2>
-        <p>Your payment is on-chain and settling. This page will update automatically — feel free to refresh.</p>
-      <% } else if (status === "pending") { %>
-        <h2>Waiting for payment…</h2>
-        <p>If you already paid, please wait a few seconds and refresh this page.</p>
-      <% } else { %>
-        <h2>Order not completed</h2>
-        <p>Status: <%= status %>. If you believe this is a mistake, contact support with order id <code><%= sessionId %></code>.</p>
-      <% } %>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"/></svg>
+        </span>
+        <%= config.brandName %>
+      </a>
     </div>
-    <a class="back-link" href="/">&larr; Back to store</a>
+  </header>
+
+  <main class="container center-wrap">
+    <div class="card status-card">
+      <% if (status === "completed") { %>
+        <div class="status-icon ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"/></svg>
+        </div>
+        <h1>Payment successful</h1>
+        <p class="msg">Thank you! Your payment has been received and confirmed.</p>
+      <% } else if (status === "processing") { %>
+        <div class="status-icon wait">
+          <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>
+        </div>
+        <h1>Confirming your payment</h1>
+        <p class="msg">Your payment was detected and is being settled. This page refreshes automatically.</p>
+      <% } else if (status === "pending") { %>
+        <div class="status-icon wait">
+          <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>
+        </div>
+        <h1>Waiting for payment</h1>
+        <p class="msg">If you've already paid, hang tight. This page refreshes automatically.</p>
+      <% } else if (status === "expired" || status === "failed") { %>
+        <div class="status-icon bad">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </div>
+        <h1>Payment <%= status %></h1>
+        <p class="msg">This payment was not completed. If you were charged, please contact support with the reference below.</p>
+      <% } else { %>
+        <div class="status-icon neutral">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <h1>We couldn't find this order</h1>
+        <p class="msg">The status of this payment is unavailable right now. Please try again shortly.</p>
+      <% } %>
+
+      <% if (order) { %>
+        <dl class="receipt">
+          <% if (order.amount != null) { %><div><dt>Amount</dt><dd>$<%= Number(order.amount).toFixed(2) %></dd></div><% } %>
+          <% if (order.email) { %><div><dt>Email</dt><dd><%= order.email %></dd></div><% } %>
+          <% if (sessionId) { %><div><dt>Reference</dt><dd><code><%= sessionId %></code></dd></div><% } %>
+          <div><dt>Status</dt><dd><span class="badge badge-<%= status %>"><%= status %></span></dd></div>
+        </dl>
+      <% } %>
+
+      <a class="btn btn-ghost" href="/">Back to home</a>
+    </div>
   </main>
+
+  <footer class="footer">
+    <div class="container">&copy; <%= new Date().getFullYear() %> <%= config.brandName %>. All rights reserved.</div>
+  </footer>
 </body>
 </html>
